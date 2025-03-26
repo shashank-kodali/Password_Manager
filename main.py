@@ -3,7 +3,8 @@ from tkinter import messagebox
 from random import choice,randint,shuffle
 import pyperclip
 import json
-# ---------------------------- PASSWORD GENERATOR ------------------------------- #
+
+
 def generatorPassword():
     letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -17,10 +18,11 @@ def generatorPassword():
     shuffle(password_list)
     password = "".join(password_list)
 
+    password_input.delete(0,"end")
     password_input.insert(0,string=password)
     pyperclip.copy(password)
 
-# ---------------------------- SAVE PASSWORD ------------------------------- #
+
 def savePassword():
     website = website_input.get()
     email = email_input.get()
@@ -31,7 +33,7 @@ def savePassword():
         messagebox.showinfo(title="Oops",message="Don't leave any fields empty.")
 
     else:
-        is_ok = messagebox.askokcancel(title=website,message=f"""This are the details entered :
+        is_ok = messagebox.askokcancel(title=website,message=f"""These are the details entered: :
                                    \n Email : {email} \n Password : {password} """)
         new_data ={
             website :{
@@ -44,7 +46,7 @@ def savePassword():
             try:
                 with open("mypasswords.json",mode="r") as data_file:
                     data = json.load(data_file)
-            except:
+            except FileNotFoundError:
                 with open("mypasswords.json",mode="w") as data_file:
                     json.dump(new_data, data_file,indent=4)
             else:
@@ -59,9 +61,30 @@ def savePassword():
                 website_input.focus()
 
     
+def findPassword():
+    website = website_input.get()
 
-    
-# ---------------------------- UI SETUP ------------------------------- #
+    if not website:
+        messagebox.showerror(title="Error", message="Please enter a website name.")
+    else:
+        try:
+            with open("mypasswords.json",mode="r") as data_file:
+                data = json.load(data_file)
+        except FileNotFoundError:
+            messagebox.showerror(title="Error", message="Password file not found!")
+            website_input.delete(0,"end")
+        except json.JSONDecodeError:
+            messagebox.showerror(title="Error", message="Password file is empty or corrupted!")
+            website_input.delete(0,"end")
+        else:
+            if website in data:
+                email_used = data[website]["Email"]
+                password_used = data[website]["Password"]
+                messagebox.showinfo(title=website, message=f"Email: {email_used}\nPassword: {password_used}")
+            else:
+                messagebox.showerror(title="Error", message=f"No details found for {website}.")
+
+
 window = Tk()
 window.title("PassWord Manager")
 window.config(padx=50,pady=50)
@@ -82,19 +105,22 @@ password_label.grid(column=0,row=3)
 
 website_input = Entry(width=35)
 website_input.focus()
-website_input.grid(column=1, row=1, columnspan=2)
+website_input.grid(column=1, row=1, columnspan=2, sticky="w")
 
 email_input = Entry(width=35)
-email_input.grid(column=1,row=2, columnspan=2)
+email_input.grid(column=1,row=2, columnspan=2, sticky="w")
 
 password_input = Entry(width=35)
-password_input.grid(column=1,row=3, columnspan=2)
+password_input.grid(column=1,row=3, columnspan=2, sticky="w")
 
-generate_button = Button(text="Generate Password",width=30, command=generatorPassword)
-generate_button.grid(column=1,row=4,columnspan=2)
+generate_button = Button(text="Generate Password", width=15, command=generatorPassword)
+generate_button.grid(column=3,row=2)
 
 add_button = Button(text="Add",width=30,command=savePassword)
-add_button.grid(column=1,row=5,columnspan=2)
+add_button.grid(column=1,row=5,columnspan=2, sticky="w")
+
+search_button = Button(text="Search", width=15, command=findPassword)
+search_button.grid(column=3,row=1)
 
 
 window.mainloop()
